@@ -1,0 +1,46 @@
+services:
+
+  backend:
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
+
+    container_name: acc-backend
+
+    ports:
+      - "8000:8000"
+
+    restart: unless-stopped
+
+    volumes:
+      - ./backend:/app
+
+    environment:
+      - PYTHONUNBUFFERED=1
+
+    networks:
+      - acc-network
+
+
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/frontend.Dockerfile
+
+    container_name: acc-frontend
+
+    ports:
+      - "3000:80"
+
+    depends_on:
+      - backend
+
+    restart: unless-stopped
+
+    networks:
+      - acc-network
+
+
+networks:
+  acc-network:
+    driver: bridge
