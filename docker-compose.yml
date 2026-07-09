@@ -16,7 +16,10 @@ services:
       - ./backend:/app
 
     environment:
-      - PYTHONUNBUFFERED=1
+      PYTHONUNBUFFERED: "1"
+
+    depends_on:
+      - sonar
 
     networks:
       - acc-network
@@ -32,10 +35,56 @@ services:
     ports:
       - "3000:80"
 
+    restart: unless-stopped
+
     depends_on:
       - backend
 
+    networks:
+      - acc-network
+
+
+  sonar-db:
+    image: postgres:16
+
+    container_name: acc-sonar-db
+
     restart: unless-stopped
+
+    environment:
+      POSTGRES_USER: sonar
+      POSTGRES_PASSWORD: sonar
+      POSTGRES_DB: sonarqube
+
+    volumes:
+      - sonar-db-data:/var/lib/postgresql/data
+
+    networks:
+      - acc-network
+
+
+  sonar:
+    image: sonarqube:lts-community
+
+    container_name: acc-sonarqube
+
+    restart: unless-stopped
+
+    depends_on:
+      - sonar-db
+
+    ports:
+      - "9000:9000"
+
+    environment:
+      SONAR_JDBC_URL: jdbc:postgresql://sonar-db:5432/sonarqube
+      SONAR_JDBC_USERNAME: sonar
+      SONAR_JDBC_PASSWORD: sonar
+
+    volumes:
+      - sonar-data:/opt/sonarqube/data
+      - sonar-extensions:/opt/sonarqube/extensions
+      - sonar-logs:/opt/sonarqube/logs
 
     networks:
       - acc-network
@@ -44,3 +93,10 @@ services:
 networks:
   acc-network:
     driver: bridge
+
+
+volumes:
+  sonar-db-data:
+  sonar-data:
+  sonar-extensions:
+  sonar-logs:
